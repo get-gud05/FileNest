@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 
-function ImageItem({ image, username }) {
+function ImageItem({ image, username, onClick }) {
   const imageUrl = `http://localhost:5000/uploads/${username}/${image}`;
   const [shareUrl, setShareUrl] = useState("");
 
-  async function handleShare() {
+  async function handleShare(e) {
+    e.stopPropagation(); 
     const res = await fetch(`http://localhost:5000/api/share/${username}/${image}`);
     const data = await res.json();
     setShareUrl(data.url);
@@ -12,12 +13,16 @@ function ImageItem({ image, username }) {
     alert(`Image link copied to clipboard!`);
   }
 
-  function handleDownload() {
+  function handleDownload(e) {
+    e.stopPropagation();
     window.open(`http://localhost:5000/api/download/${username}/${image}`);
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition cursor-pointer">
+    <div
+      className="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition cursor-pointer"
+      onClick={onClick}
+    >
       <img
         src={imageUrl}
         alt={image}

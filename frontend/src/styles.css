@@ -32,10 +32,6 @@ button {
   margin-top: 8px;
 }
 
-button:hover {
-  background: #3367d6;
-}
-
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

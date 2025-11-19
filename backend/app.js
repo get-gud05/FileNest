@@ -3,7 +3,9 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const bcrypt = require('bcrypt');
 
+const saltRounds = 10;
 const app = express();
 const PORT = 5000;
 
@@ -13,7 +15,6 @@ app.use(express.json());
 const USERS_FILE = path.join(__dirname, 'users.json');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
-// Helpers for user reading and writing
 function loadUsers() {
   try {
     return JSON.parse(fs.readFileSync(USERS_FILE));
@@ -27,32 +28,47 @@ function saveUsers(users) {
 }
 
 // Registration & login
-app.post('/api/register', (req, res) => {
+app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
   const users = loadUsers();
+
   if (users.find(u => u.username === username)) {
     return res.status(409).json({ error: 'Username already exists' });
   }
-  users.push({ username, password });
-  saveUsers(users);
-  fs.mkdirSync(path.join(UPLOADS_DIR, username), { recursive: true });
-  res.json({ success: true });
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    users.push({ username, password: hashedPassword });
+    saveUsers(users);
+    fs.mkdirSync(path.join(UPLOADS_DIR, username), { recursive: true });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Error hashing password' });
+  }
 });
 
-app.post('/api/login', (req, res) => {
+
+app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   const users = loadUsers();
-  const user = users.find(u => u.username === username && u.password === password);
+  const user = users.find(u => u.username === username);
+
   if (!user) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
+
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
   res.json({ success: true });
 });
 
-// Fix: Here the username comes from the route, not body
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const userDir = path.join(UPLOADS_DIR, req.params.username); // <<< CHANGED
+    const userDir = path.join(UPLOADS_DIR, req.params.username); 
     fs.mkdirSync(userDir, { recursive: true });
     cb(null, userDir);
   },
@@ -62,7 +78,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Fix: Route now expects username in URL param, not body
 app.post('/api/upload/:username', upload.single('image'), (req, res) => {
   res.json({ success: true, filename: req.file.filename });
 });

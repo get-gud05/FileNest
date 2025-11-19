@@ -1,6 +1,10 @@
 [
   {
-    "username": "hello",
-    "password": "12345"
+    "username": "abhishek",
+    "password": "$2b$10$WdFf3zD3sbx.s/l/GfHUHuHlQvNUR0JSI9T5SN5nwiAfbdJFvKtta"
+  },
+  {
+    "username": "aayush",
+    "password": "$2b$10$oMaLEpD/TSXdVB6BchxRsu7aOWXF6ldwrJr4hHsKQR9wgS37C8j5O"
   }
 ]
